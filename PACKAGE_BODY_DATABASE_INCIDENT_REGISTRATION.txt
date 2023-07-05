@@ -1,0 +1,59 @@
+CREATE OR REPLACE PACKAGE BODY INCIDENT_REGISTRATION
+AS
+    FUNCTION COUNT_OF_INCIDENT(date1 IN DATE, date2 IN DATE) RETURN NUMBER IS
+    result_cnt NUMBER := 0;
+    d1 DATE := date1; d2 DATE := date2;
+    temp DATE;
+    BEGIN
+        IF d1>d2 THEN temp:=d1; d1:=d2; d2:=temp; END IF;
+        SELECT COUNT(INCIDENT_ID) INTO result_cnt FROM INCIDENT
+            WHERE REGISTRATION_DATE BETWEEN d1 AND d2;
+        RETURN result_cnt;
+    END;
+    FUNCTION COUNT_OF_INCIDENT(id_person IN NUMBER) RETURN NUMBER IS
+    result_cnt NUMBER := 0;
+    BEGIN
+        SELECT COUNT(i.INCIDENT_ID) INTO result_cnt FROM INCIDENT i JOIN PERSON p ON i.INCIDENT_ID=p.INCIDENT_ID
+            WHERE PERSON_ID=id_person;
+        RETURN result_cnt;
+    END;
+
+    PROCEDURE ADD_INCIDENT(incident_ IN INCIDENT_RECORD) IS
+    BEGIN
+        INSERT INTO INCIDENT VALUES(incident_.INCIDENT_ID,incident_.REGISTRATION_DATE,incident_.INCIDENT_TYPE);
+    END;
+    PROCEDURE UPDATE_INCIDENT(id_incident IN NUMBER, incident_ IN INCIDENT_RECORD) IS
+    incident_exception EXCEPTION;
+    BEGIN
+        UPDATE INCIDENT SET
+            INCIDENT_ID=incident_.INCIDENT_ID,
+            REGISTRATION_DATE=incident_.REGISTRATION_DATE,
+            INCIDENT_TYPE=incident_.INCIDENT_TYPE
+        WHERE INCIDENT_ID=id_incident;
+        IF SQL%NOTFOUND THEN RAISE incident_exception; END IF;
+        EXCEPTION
+        WHEN incident_exception THEN DBMS_OUTPUT.PUT_LINE('Инцидент с таким идентификационным номером не найден');
+    END;
+
+    PROCEDURE ADD_PERSON(person_ IN PERSON_RECORD) IS
+    BEGIN
+        INSERT INTO PERSON VALUES(person_.PERSON_ID,person_.SURNAME,person_.NAME,person_.PATRONYMIC,person_.ADDRESS,person_.CONVICTIONS_NUMBER,person_.ROLE_PERSON,person_.INCIDENT_ID);
+    END;
+    PROCEDURE UPDATE_PERSON(id_person IN NUMBER, person_ IN PERSON_RECORD) IS
+    person_exception EXCEPTION;
+    BEGIN
+        UPDATE PERSON SET
+            PERSON_ID=person_.PERSON_ID,
+            SURNAME=person_.SURNAME,
+            NAME=person_.NAME,
+            PATRONYMIC=person_.PATRONYMIC,
+            ADDRESS=person_.ADDRESS,
+            CONVICTIONS_NUMBER=person_.CONVICTIONS_NUMBER,
+            ROLE_PERSON=person_.ROLE_PERSON,
+            INCIDENT_ID=person_.INCIDENT_ID
+        WHERE PERSON_ID=id_person;
+        IF SQL%NOTFOUND THEN RAISE person_exception; END IF;
+        EXCEPTION
+        WHEN person_exception THEN DBMS_OUTPUT.PUT_LINE('Перосна с таким идентификационным номером не найдена');
+    END;
+END;
